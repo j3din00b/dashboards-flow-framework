@@ -155,6 +155,38 @@ export const OPENAI_CONFIGS = {
   } as RemoteEmbeddingModelConfig,
 };
 
+// Neural Sparse
+export const NEURAL_SPARSE_CONFIGS = {
+  [`opensearch-neural-sparse-encoding-v2-distill`]: {
+    dimension: 30522,
+    fieldName: 'passage_embedding',
+  } as RemoteEmbeddingModelConfig,
+  [`opensearch-neural-sparse-encoding-v1`]: {
+    dimension: 30522,
+    fieldName: 'passage_embedding',
+  } as RemoteEmbeddingModelConfig,
+  [`opensearch-neural-sparse-encoding-multilingual-v1`]: {
+    dimension: 105879,
+    fieldName: 'passage_embedding',
+  } as RemoteEmbeddingModelConfig,
+  [`opensearch-neural-sparse-encoding-doc-v2-mini`]: {
+    dimension: 30522,
+    fieldName: 'passage_embedding',
+  } as RemoteEmbeddingModelConfig,
+    [`opensearch-neural-sparse-encoding-doc-v3-distill`]: {
+    dimension: 30522,
+    fieldName: 'passage_embedding',
+  } as RemoteEmbeddingModelConfig,
+  [`opensearch-neural-sparse-encoding-doc-v1`]: {
+    dimension: 30522,
+    fieldName: 'passage_embedding',
+  } as RemoteEmbeddingModelConfig,
+  [`opensearch-neural-sparse-encoding-doc-v2-distill`]: {
+    dimension: 30522,
+    fieldName: 'passage_embedding',
+  } as RemoteEmbeddingModelConfig,
+};
+
 /**
  * Various constants pertaining to Workflow configs
  */
@@ -173,6 +205,7 @@ export enum WORKFLOW_TYPE {
   HYBRID_SEARCH = 'Hybrid Search',
   VECTOR_SEARCH_WITH_RAG = 'RAG with Vector Retrieval',
   HYBRID_SEARCH_WITH_RAG = 'RAG with Hybrid Search',
+  SEMANTIC_SEARCH_USING_SPARSE_ENCODERS = 'Semantic Search using Sparse Encoders',
   CUSTOM = 'Custom Search',
   UNKNOWN = 'Unknown',
 }
@@ -211,6 +244,7 @@ export enum MODEL_TYPE {
 export enum MODEL_CATEGORY {
   EMBEDDING = 'EMBEDDING',
   LLM = 'LLM',
+  SPARSE_ENCODER = 'SPARSE_ENCODER',
 }
 
 /**
@@ -247,10 +281,10 @@ export const ML_INFERENCE_DOCS_LINK =
   'https://opensearch.org/docs/latest/ingest-pipelines/processors/ml-inference/#configuration-parameters';
 export const ML_INFERENCE_RESPONSE_DOCS_LINK =
   'https://opensearch.org/docs/latest/search-plugins/search-pipelines/ml-inference-search-response/#request-fields';
-export const ML_CHOOSE_MODEL_LINK =
-  'https://opensearch.org/docs/latest/ml-commons-plugin/integrating-ml-models/#choosing-a-model';
 export const ML_REMOTE_MODEL_LINK =
-  'https://opensearch.org/docs/latest/ml-commons-plugin/remote-models/index/';
+  'https://docs.opensearch.org/docs/latest/ml-commons-plugin/remote-models/supported-connectors/';
+export const ML_INTERFACE_LINK =
+  'https://docs.opensearch.org/docs/latest/ml-commons-plugin/api/model-apis/register-model/#the-interface-parameter';
 export const TEXT_CHUNKING_PROCESSOR_LINK =
   'https://opensearch.org/docs/latest/ingest-pipelines/processors/text-chunking/';
 export const CREATE_WORKFLOW_LINK =
@@ -273,6 +307,8 @@ export const ML_RESPONSE_PROCESSOR_EXAMPLE_DOCS_LINK =
 export const UPDATE_MODEL_DOCS_LINK =
   'https://opensearch.org/docs/latest/ml-commons-plugin/api/model-apis/update-model/';
 export const JSONLINES_LINK = 'https://jsonlines.org/';
+export const EXPANDED_FORM_QUERY_ISSUE =
+  'https://github.com/opensearch-project/OpenSearch/issues/17358';
 
 // Large Language Models Documentation Links
 export const BEDROCK_CLAUDE_3_SONNET_DOCS_LINK =
@@ -290,6 +326,14 @@ export const COHERE_EMBEDDING_MODEL_DOCS_LINK =
 
 export const BEDROCK_TITAN_EMBEDDING_DOCS_LINK =
   'https://github.com/opensearch-project/dashboards-flow-framework/blob/main/documentation/models.md#amazon-bedrock-titan-text-embedding';
+
+// Sparse Encoder Models Documentation Links
+export const OPENSEARCH_NEURAL_SPARSE_DOCS_LINK =
+  'https://huggingface.co/opensearch-project/opensearch-neural-sparse-encoding-v2-distill';
+
+// TODO: Update this with the official OpenSearch documentation URL when it's available
+export const SAGEMAKER_SPARSE_DEPLOY_LINK =
+  'https://github.com/zhichao-aws/opensearch-neural-sparse-sample/tree/main/examples/deploy_on_sagemaker';
 
 // ML Models setup Documentation Link
 export const ML_MODELS_SETUP_DOCS_LINK =
@@ -593,6 +637,18 @@ export const HYBRID_SEARCH_QUERY_MATCH_TERM = {
     },
   },
 };
+export const NEURAL_SPARSE_SEARCH_QUERY = {
+  _source: {
+    excludes: [VECTOR_FIELD_PATTERN],
+  },
+  query: {
+    neural_sparse: {
+      [VECTOR_FIELD_PATTERN]: {
+        query_tokens: VECTOR_PATTERN,
+      },
+    },
+  },
+};
 
 export const QUERY_PRESETS = [
   {
@@ -646,6 +702,10 @@ export const QUERY_PRESETS = [
   {
     name: WORKFLOW_TYPE.MULTIMODAL_SEARCH,
     query: customStringify(MULTIMODAL_SEARCH_QUERY_BOOL),
+  },
+  {
+    name: 'Neural Sparse Search Query',
+    query: customStringify(NEURAL_SPARSE_SEARCH_QUERY),
   },
   {
     name: 'Semantic search (neural query)',
@@ -874,6 +934,7 @@ export enum INSPECTOR_TAB_ID {
   INGEST = 'ingest',
   ERRORS = 'errors',
   RESOURCES = 'resources',
+  PREVIEW = 'preview',
 }
 
 export const INSPECTOR_TABS = [
@@ -897,4 +958,27 @@ export const INSPECTOR_TABS = [
     name: 'Resources',
     disabled: false,
   },
+  {
+    id: INSPECTOR_TAB_ID.PREVIEW,
+    name: 'Preview',
+    disabled: false,
+  },
 ];
+
+// component IDs for each left nav component. Some may be tied
+// to the lower-level form, others are for visual flow purposes only,
+// like 'retrieveFromDataSource' and 'searchResults'
+export enum COMPONENT_ID {
+  SOURCE_DATA = 'ingest.docs',
+  ENRICH_DATA = 'ingest.enrich',
+  INGEST_DATA = 'ingest.index',
+  SEARCH_REQUEST = 'search.request',
+  ENRICH_SEARCH_REQUEST = 'search.enrichRequest',
+  RUN_QUERY = 'runQuery',
+  ENRICH_SEARCH_RESPONSE = 'search.enrichResponse',
+  SEARCH_RESULTS = 'searchResults',
+}
+
+// We have to persist a standalone string to override 'style' component, as setting className does
+// not override the default styles from the EuiCard component.
+export const LEFT_NAV_SELECTED_STYLE = '2px solid rgba(128, 128, 128, 0.8)';
